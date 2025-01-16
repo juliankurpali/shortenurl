@@ -17,7 +17,9 @@ import java.util.Random;
 
 @Service
 public class UrlShortenService {
+
     private final UrlShortenRepository urlShortenRepository;
+
     @Value("${base.url}")
     private String BASE_URL;
 

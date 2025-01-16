@@ -1,4 +1,4 @@
-package com.juli.urlshorten.service.urlshorten;
+package com.juli.urlshorten.service;
 
 import com.juli.urlshorten.mapper.UrlObjectsMapper;
 import com.juli.urlshorten.model.api.UrlMappingRequest;
@@ -7,41 +7,79 @@ import com.juli.urlshorten.model.entity.UrlMappingEntity;
 import com.juli.urlshorten.repository.UrlShortenRepository;
 import com.juli.urlshorten.util.SecurityUtil;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class UrlShortenService {
 
     private final UrlShortenRepository urlShortenRepository;
+    private final RedisService redisService;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    @Value("${base.url}")
-    private String BASE_URL;
-
-    public UrlShortenService(UrlShortenRepository urlShortenRepository) {
+    public UrlShortenService(UrlShortenRepository urlShortenRepository, RedisService redisService) {
         this.urlShortenRepository = urlShortenRepository;
+        this.redisService = redisService;
     }
 
     @Transactional
     public UrlMappingDTO findEntityByShortUrl(String shortUrl) {
+        UrlMappingDTO urlMappingDTO = findUrlMapperByShortUrlFromRedis(shortUrl);
+
+        return urlMappingDTO != null ? urlMappingDTO : findUrlMapperByShortUrlFromDb(shortUrl);
+    }
+
+    private UrlMappingDTO findUrlMapperByShortUrlFromRedis(String shortUrl) {
+        UrlMappingDTO urlMappingDTORedis =  redisService.get(shortUrl);
+        if (urlMappingDTORedis != null) {
+            urlMappingDTORedis.setHitCount(urlMappingDTORedis.getHitCount() + 1);
+            asyncAdjustHitCount(shortUrl);
+            return urlMappingDTORedis;
+        }
+        return null;
+    }
+
+    private UrlMappingDTO findUrlMapperByShortUrlFromDb(String shortUrl) {
         return urlShortenRepository.findByShortUrl(shortUrl).map(urlMappingEntity -> {
             //If the URL has expired, delete the URL
             if (urlMappingEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
                 urlShortenRepository.delete(urlMappingEntity);
                 return null;
             }
-            //If the URL has not expired, increment the hit count
-            urlMappingEntity.setHitCount(urlMappingEntity.getHitCount() + 1);
-            //Update the hit count in the database
-            saveUrlMappingEntity(urlMappingEntity);
             //Return the URL
-            return UrlObjectsMapper.mapToDtoUsingEntity(urlMappingEntity);
+            return adjustHitCount(urlMappingEntity);
         }).orElse(null);
+    }
+
+    private void asyncAdjustHitCount(String shortUrl) {
+        CompletableFuture.runAsync(() -> {
+            urlShortenRepository.findByShortUrl(shortUrl).ifPresent(urlMappingEntity -> {
+                if (urlMappingEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
+                    urlShortenRepository.delete(urlMappingEntity);
+                } else {
+                    adjustHitCount(urlMappingEntity);
+                }
+            });
+        }, executorService);
+    }
+
+    private UrlMappingDTO adjustHitCount(UrlMappingEntity urlMappingEntity) {
+        //If the URL has not expired, increment the hit count
+        urlMappingEntity.setHitCount(urlMappingEntity.getHitCount() + 1);
+        //Update the hit count in the database
+        saveUrlMappingEntity(urlMappingEntity);
+        UrlMappingDTO urlMappingDTO = UrlObjectsMapper.mapToDtoUsingEntity(urlMappingEntity);
+        //Save the object in redis with the rest of the time to live
+        redisService.save(urlMappingEntity.getShortUrl(), urlMappingDTO, Duration.between(LocalDateTime.now(),urlMappingEntity.getExpiryDate()));
+        return urlMappingDTO;
     }
 
     @Transactional
@@ -62,6 +100,7 @@ public class UrlShortenService {
 
     @Scheduled(fixedRate = 60000)
     public void deleteExpiredUrls() {
+        //Redis keys will expire automatically based on TTL
         urlShortenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
     }
 

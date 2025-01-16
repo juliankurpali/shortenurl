@@ -26,6 +26,7 @@ public class UrlObjectsMapper {
         urlMappingDTO.setOriginalUrl(urlMappingEntity.getOriginalUrl());
         urlMappingDTO.setShortUrl(urlMappingEntity.getShortUrl());
         urlMappingDTO.setExpiryDate(urlMappingEntity.getExpiryDate());
+        urlMappingDTO.setHitCount(urlMappingEntity.getHitCount());
         return urlMappingDTO;
     }
 }

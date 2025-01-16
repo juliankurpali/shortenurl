@@ -8,6 +8,7 @@ import com.juli.urlshorten.repository.UrlShortenRepository;
 import com.juli.urlshorten.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -55,6 +56,11 @@ public class UrlShortenService {
 
     public void saveUrlMappingEntity(UrlMappingEntity urlMappingEntity) {
         urlShortenRepository.save(urlMappingEntity);
+    }
+
+    @Scheduled(fixedRate = 60000)
+    public void deleteExpiredUrls() {
+        urlShortenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
     }
 
     UrlMappingEntity findEntityByOriginalUrl(String originalUrl) {

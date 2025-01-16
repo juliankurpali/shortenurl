@@ -16,19 +16,26 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 public class UrlMappingEntity implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
     @Column(nullable = false)
     private String originalUrl;
+
     @Column(nullable = false, unique = true)
     private String shortUrl;
+
     @Column(nullable = false)
     private LocalDateTime expiryDate;
+
     @Column(nullable = false)
     private int hitCount;
+
     @Column(nullable = false)
     private LocalDateTime createdDate;
+
     @Column(nullable = false)
     private String createdBy;
 }

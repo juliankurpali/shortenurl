@@ -1,13 +1,17 @@
 package com.juli.urlshorten.prepopulation;
 
 import com.juli.urlshorten.model.entity.RoleEntity;
+import com.juli.urlshorten.model.entity.UrlMappingEntity;
 import com.juli.urlshorten.model.entity.UserEntity;
+import com.juli.urlshorten.model.enums.ExpiryOptions;
 import com.juli.urlshorten.repository.RoleRepository;
+import com.juli.urlshorten.repository.UrlShortenRepository;
 import com.juli.urlshorten.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
-
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,15 +20,18 @@ public class PrepopulateUsers {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final UrlShortenRepository urlShortenRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public PrepopulateUsers(UserRepository userRepository, RoleRepository roleRepository, BCryptPasswordEncoder passwordEncoder) {
+    public PrepopulateUsers(UserRepository userRepository, RoleRepository roleRepository, UrlShortenRepository urlShortenRepository, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.urlShortenRepository = urlShortenRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
+    @Transactional
     public void prepopulate() throws Exception {
 
         RoleEntity adminRole = new RoleEntity();
@@ -60,6 +67,29 @@ public class PrepopulateUsers {
             userRepository.save(user1);
             userRepository.save(user2);
             System.out.println("Users added to the database");
+
+
+            UrlMappingEntity urlMappingEntity = new UrlMappingEntity();
+            urlMappingEntity.setOriginalUrl("https://www.google.com");
+            urlMappingEntity.setShortUrl("ABCDEF");
+            urlMappingEntity.setHitCount(10);
+            urlMappingEntity.setExpiryDate(LocalDateTime.now().plus(ExpiryOptions.ONE_MINUTE.getDuration()));
+            urlMappingEntity.setCreatedBy("user1");
+            urlMappingEntity.setCreatedDate(LocalDateTime.now());
+
+            urlShortenRepository.save(urlMappingEntity);
+
+            UrlMappingEntity urlMappingEntity2 = new UrlMappingEntity();
+            urlMappingEntity2.setOriginalUrl("https://www.facebook.com");
+            urlMappingEntity2.setShortUrl("GHIJKL");
+            urlMappingEntity2.setHitCount(5);
+            urlMappingEntity2.setExpiryDate(LocalDateTime.now().plus(ExpiryOptions.FIVE_MINUTES.getDuration()));
+            urlMappingEntity2.setCreatedBy("user2");
+            urlMappingEntity2.setCreatedDate(LocalDateTime.now());
+
+            urlShortenRepository.save(urlMappingEntity2);
+
+            System.out.println("URLs added to the database");
         }
     }
 }

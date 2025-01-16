@@ -3,7 +3,14 @@ package com.juli.urlshorten.model.enums;
 import java.time.Duration;
 
 public enum ExpiryOptions {
-    ONE_MINUTE(0, 0, 1), FIVE_MINUTES(0, 0, 5), TEN_MINUTES(0, 0, 10), THIRTY_MINUTES(0, 0, 30), ONE_HOUR(0, 1, 0), ONE_DAY(1, 0, 0), ONE_WEEK(7, 0, 0);
+    ONE_MINUTE(0, 0, 1),
+    FIVE_MINUTES(0, 0, 5),
+    TEN_MINUTES(0, 0, 10),
+    THIRTY_MINUTES(0, 0, 30),
+    ONE_HOUR(0, 1, 0),
+    ONE_DAY(1, 0, 0),
+    ONE_WEEK(7, 0, 0);
+    
     private final int days;
     private final int hours;
     private final int minutes;

@@ -2,10 +2,13 @@ package com.juli.urlshorten.service;
 
 import com.juli.urlshorten.model.dto.UrlMappingDTO;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 @Service
 public class RedisService {
@@ -19,24 +22,40 @@ public class RedisService {
         this.redisTemplate = redisTemplate;
     }
 
-    // Save data to Redis
     public void save(String key, UrlMappingDTO value, Duration timeout) {
-        redisTemplate.opsForValue().set(key, value, getMaxTimeout(timeout), TimeUnit.SECONDS);
+        executeWithRedisExceptionHandling(() -> {
+            redisTemplate.opsForValue().set(key, value, getMaxTimeout(timeout), TimeUnit.SECONDS);
+            return null;
+        }, "Failed to save key: " + key);
     }
 
-    // Retrieve data from Redis
     public UrlMappingDTO get(String key) {
-        return redisTemplate.opsForValue().get(key);
+        return executeWithRedisExceptionHandling(
+                () -> redisTemplate.opsForValue().get(key),
+                "Failed to retrieve key: " + key
+        );
     }
 
-    // Check if a key exists in Redis
     public boolean exists(String key) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        return executeWithRedisExceptionHandling(
+                () -> Boolean.TRUE.equals(redisTemplate.hasKey(key)),
+                "Failed to check existence for key: " + key
+        );
     }
 
-    // Set a timeout for a key in Redis
-    public long getMaxTimeout(Duration timeout){
+    private <T> T executeWithRedisExceptionHandling(Supplier<T> redisOperation, String errorMessage) {
+        try {
+            return redisOperation.get();
+        } catch (RedisConnectionFailureException ex) {
+            throw new RedisConnectionFailureException(errorMessage, ex);
+        } catch (RedisSystemException ex) {
+            throw new RuntimeException(errorMessage, ex);
+        } catch (Exception ex) {
+            throw new RuntimeException("Unexpected error: " + errorMessage, ex);
+        }
+    }
+
+    private long getMaxTimeout(Duration timeout) {
         return Math.min(timeout.getSeconds(), maxTimeout);
     }
 }
-

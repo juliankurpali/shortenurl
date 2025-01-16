@@ -1,12 +1,9 @@
 package com.juli.urlshorten.controller;
 
 import com.juli.urlshorten.model.api.LoginRequest;
-import com.juli.urlshorten.service.CustomUserDetailsService;
 import com.juli.urlshorten.service.LoginService;
-import com.juli.urlshorten.util.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationController {
     private final LoginService loginService;
 
-    public AuthenticationController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, CustomUserDetailsService userDetailsService, LoginService loginService) {
+    public AuthenticationController(LoginService loginService) {
         this.loginService = loginService;
     }
 

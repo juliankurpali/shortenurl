@@ -1,8 +1,6 @@
 package com.juli.urlshorten.configuration.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.juli.urlshorten.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,11 +29,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private String toJson(ErrorResponse errorResponse) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
-            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-            return objectMapper.writeValueAsString(errorResponse);
+            return new ObjectMapper().writeValueAsString(errorResponse);
         } catch (IOException e) {
             throw new RuntimeException("Error converting ErrorResponse to JSON", e);
         }

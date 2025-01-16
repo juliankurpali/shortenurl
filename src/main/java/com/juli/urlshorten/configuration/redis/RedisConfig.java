@@ -1,8 +1,6 @@
 package com.juli.urlshorten.configuration.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.juli.urlshorten.model.dto.UrlMappingDTO;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,12 +17,8 @@ public class RedisConfig {
         RedisTemplate<String, UrlMappingDTO> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
         // Configure the Jackson2JsonRedisSerializer with UrlMappingDTO class
-        Jackson2JsonRedisSerializer<UrlMappingDTO> serializer = new Jackson2JsonRedisSerializer<>(objectMapper,UrlMappingDTO.class);
+        Jackson2JsonRedisSerializer<UrlMappingDTO> serializer = new Jackson2JsonRedisSerializer<>(new ObjectMapper(),UrlMappingDTO.class);
 
         // Set key and value serializers
         redisTemplate.setKeySerializer(new StringRedisSerializer());

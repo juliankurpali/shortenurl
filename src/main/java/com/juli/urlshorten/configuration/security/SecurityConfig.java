@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 @EnableMethodSecurity
 @AllArgsConstructor
 public class SecurityConfig {
-    private JwtAuthenticationEntryPoint authenticationEntryPoint;
     private JwtAuthenticationFilter authenticationFilter;
 
     @Bean
@@ -36,16 +35,11 @@ public class SecurityConfig {
                     authorize.anyRequest().authenticated();
                 })
                 .httpBasic(Customizer.withDefaults())
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)) // Use the custom entry point here
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint))
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
-
-
-
 
     @Bean
     public static PasswordEncoder passwordEncoder() {

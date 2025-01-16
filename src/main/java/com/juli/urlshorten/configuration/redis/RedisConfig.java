@@ -13,12 +13,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Bean
-    public RedisTemplate<String, UrlMappingDTO> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, UrlMappingDTO> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
         RedisTemplate<String, UrlMappingDTO> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);
 
         // Configure the Jackson2JsonRedisSerializer with UrlMappingDTO class
-        Jackson2JsonRedisSerializer<UrlMappingDTO> serializer = new Jackson2JsonRedisSerializer<>(new ObjectMapper(),UrlMappingDTO.class);
+        Jackson2JsonRedisSerializer<UrlMappingDTO> serializer = new Jackson2JsonRedisSerializer<>(objectMapper,UrlMappingDTO.class);
 
         // Set key and value serializers
         redisTemplate.setKeySerializer(new StringRedisSerializer());

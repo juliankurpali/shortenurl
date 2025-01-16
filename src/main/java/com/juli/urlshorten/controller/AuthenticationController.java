@@ -27,13 +27,13 @@ public class AuthenticationController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin")
-    public String admin() {
-        return "Admin";
+    public ResponseEntity<String> admin() {
+        return ResponseEntity.ok("Admin");
     }
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/user")
-    public String user() {
-        return "User";
+    public ResponseEntity<String> user() {
+        return ResponseEntity.ok("User");
     }
 }

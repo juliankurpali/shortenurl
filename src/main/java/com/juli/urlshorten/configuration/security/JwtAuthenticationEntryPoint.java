@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.juli.urlshorten.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -12,7 +13,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 @Component
+@AllArgsConstructor
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    private final ObjectMapper objectMapper;
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
@@ -21,7 +24,6 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         errorResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         errorResponse.setError("Unauthorized");
         errorResponse.setMessage("Full authentication is required to access this resource.");
-
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.getWriter().write(toJson(errorResponse));
@@ -29,7 +31,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private String toJson(ErrorResponse errorResponse) {
         try {
-            return new ObjectMapper().writeValueAsString(errorResponse);
+            return objectMapper.writeValueAsString(errorResponse);
         } catch (IOException e) {
             throw new RuntimeException("Error converting ErrorResponse to JSON", e);
         }

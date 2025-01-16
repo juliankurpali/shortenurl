@@ -32,6 +32,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> {
                     authorize.requestMatchers("/api/auth/**").permitAll();
                     authorize.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    authorize.requestMatchers(HttpMethod.GET, "swagger-ui/**").permitAll();
+                    authorize.requestMatchers(HttpMethod.GET, "/v3/api-docs/**").permitAll();
                     authorize.anyRequest().authenticated();
                 })
                 .httpBasic(Customizer.withDefaults())

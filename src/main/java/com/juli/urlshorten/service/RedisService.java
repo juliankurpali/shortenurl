@@ -43,6 +43,13 @@ public class RedisService {
         );
     }
 
+    public void delete(String key) {
+        executeWithRedisExceptionHandling(
+                () -> redisTemplate.delete(key),
+                "Failed to delete key: " + key
+        );
+    }
+
     private <T> T executeWithRedisExceptionHandling(Supplier<T> redisOperation, String errorMessage) {
         try {
             return redisOperation.get();

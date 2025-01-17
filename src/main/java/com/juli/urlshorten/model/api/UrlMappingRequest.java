@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class UrlMappingRequest {
-    private String originalUrl;
+    private String requestedUrl;
     private ExpiryOptions expiryOptions = ExpiryOptions.FIVE_MINUTES;
 }

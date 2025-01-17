@@ -3,6 +3,7 @@ package com.juli.urlshorten.repository;
 import com.juli.urlshorten.model.entity.UrlMappingEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -12,5 +13,6 @@ public interface UrlShortenRepository extends JpaRepository<UrlMappingEntity, Lo
 
     Optional<UrlMappingEntity> findByOriginalUrl(String originalUrl);
 
-    void deleteByExpiryDateBefore(LocalDateTime time);
+    @Transactional
+    void deleteByExpiryDateBefore(LocalDateTime expiryDate);
 }

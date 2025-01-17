@@ -13,7 +13,7 @@ public class UrlObjectsMapper {
         Optional<UserDetails> userDetails = Optional.ofNullable(SecurityUtil.getUserDetails());
         UrlMappingEntity urlMappingEntity = new UrlMappingEntity();
         urlMappingEntity.setShortUrl(shortUrl);
-        urlMappingEntity.setOriginalUrl(urlMappingRequest.getOriginalUrl());
+        urlMappingEntity.setOriginalUrl(urlMappingRequest.getRequestedUrl());
         urlMappingEntity.setExpiryDate(LocalDateTime.now().plus(urlMappingRequest.getExpiryOptions().getDuration()));
         urlMappingEntity.setHitCount(0);
         urlMappingEntity.setCreatedDate(LocalDateTime.now());

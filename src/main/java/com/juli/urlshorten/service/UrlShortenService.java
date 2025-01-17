@@ -110,7 +110,7 @@ public class UrlShortenService {
             saveUrlMappingEntity(urlMappingEntity);
             return UrlObjectsMapper.mapToDtoUsingEntity(urlMappingEntity);
         } catch (Exception ex) {
-            throw new RuntimeException("Error occurred while shortening URL: " + urlMappingRequest.getOriginalUrl(), ex);
+            throw new RuntimeException("Error occurred while shortening URL: " + urlMappingRequest.getRequestedUrl(), ex);
         }
     }
 
@@ -123,6 +123,7 @@ public class UrlShortenService {
     }
 
     @Scheduled(fixedRate = 60000)
+    @Transactional
     public void deleteExpiredUrls() {
         try {
             urlShortenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
@@ -138,7 +139,7 @@ public class UrlShortenService {
     private UrlMappingDTO checkUserRequestExistingUrlMapper(UrlMappingRequest urlMappingRequest) {
         try {
             Optional<UserDetails> userDetails = Optional.ofNullable(SecurityUtil.getUserDetails());
-            UrlMappingEntity urlMappingEntity = findEntityByOriginalUrl(urlMappingRequest.getOriginalUrl());
+            UrlMappingEntity urlMappingEntity = findEntityByOriginalUrl(urlMappingRequest.getRequestedUrl());
             if (userDetails.isPresent() && urlMappingEntity != null && userDetails.get().getUsername().equals(urlMappingEntity.getCreatedBy())) {
                 urlMappingEntity.setExpiryDate(LocalDateTime.now().plus(urlMappingRequest.getExpiryOptions().getDuration()));
                 saveUrlMappingEntity(urlMappingEntity);
@@ -152,6 +153,7 @@ public class UrlShortenService {
         return null;
     }
 
+    //The way we generate the short URL could be done in a more sophisticated way
     private String generateShortUrl() {
         String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Random random = new Random();
@@ -160,5 +162,20 @@ public class UrlShortenService {
             shortUrl.append(characters.charAt(random.nextInt(characters.length())));
         }
         return shortUrl.toString();
+    }
+
+    @Transactional
+    public UrlMappingDTO changeExpiryOptions(UrlMappingRequest urlMappingRequest) {
+
+        UrlMappingEntity urlMappingEntity = urlShortenRepository.findByShortUrl(urlMappingRequest.getRequestedUrl()).orElse(null);
+        if (urlMappingEntity == null) {
+            throw new RuntimeException("Shortened URL not found: " + urlMappingRequest.getRequestedUrl());
+        }
+        if(redisService.exists(urlMappingRequest.getRequestedUrl())) {
+            redisService.delete(urlMappingRequest.getRequestedUrl());
+        }
+        urlMappingEntity.setExpiryDate(LocalDateTime.now().plus(urlMappingRequest.getExpiryOptions().getDuration()));
+        saveUrlMappingEntity(urlMappingEntity);
+        return UrlObjectsMapper.mapToDtoUsingEntity(urlMappingEntity);
     }
 }

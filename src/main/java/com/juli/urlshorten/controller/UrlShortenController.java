@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class UrlShortenController {
+
     private final UrlShortenService urlShortenService;
 
     @Value("${base.url}")
@@ -49,7 +50,24 @@ public class UrlShortenController {
     @GetMapping(value = "/r/{shortUrl}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<UrlMappingDTO> getOriginalUrl(@Parameter(description = "The shortened URL") @PathVariable String shortUrl, @RequestHeader(value = "Authorization", required = false) String bearerToken) {
 
+        if(shortUrl == null || shortUrl.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         UrlMappingDTO urlMappingDTO = urlShortenService.findEntityByShortUrl(shortUrl);
+        urlMappingDTO.setShortUrl(BASE_URL+ urlMappingDTO.getShortUrl());
+
+        return ResponseEntity.ok(urlMappingDTO);
+    }
+
+    @Operation(summary = "Change expiry options for a shortened URL", description = "This endpoint takes a shortened URL and new expiry options and updates the expiry options for the shortened URL.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Expiry options updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Shortened URL not found")
+    })
+    @PostMapping(value = "/change-expiry", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UrlMappingDTO> changeExpiryOptions(@Parameter(description = "Request containing the shortened URL and new expiryOptions") @RequestBody UrlMappingRequest urlMappingRequest, @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+        UrlMappingDTO urlMappingDTO = urlShortenService.changeExpiryOptions(urlMappingRequest);
         urlMappingDTO.setShortUrl(BASE_URL+ urlMappingDTO.getShortUrl());
 
         return ResponseEntity.ok(urlMappingDTO);
